@@ -5,4 +5,3 @@ __pycache__/
 .claude
 chroma_store/
 data
-flow.txt
