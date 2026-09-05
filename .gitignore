@@ -1,0 +1,8 @@
+venv
+.env
+chroma_db
+__pycache__/
+.claude
+chroma_store/
+data
+flow

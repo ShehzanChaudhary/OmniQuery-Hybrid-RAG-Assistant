@@ -1,0 +1,25 @@
+venv/
+.venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+
+.git/
+.gitignore
+
+.env
+.env.*
+
+.claude/
+notebooks/
+flow.txt
+*.md
+
+# Personal local chat history — start production with a clean sidebar.
+data/sessions/
+
+# Stray duplicate left over from local dev; the real store the app reads is
+# the top-level chroma_store/ (see src/adapters/chroma_db.py DEFAULT_PERSIST_DIR).
+src/chroma_store/
+
+.DS_Store

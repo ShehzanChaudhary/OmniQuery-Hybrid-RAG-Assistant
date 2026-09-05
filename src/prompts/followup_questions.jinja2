@@ -1,0 +1,14 @@
+Based on the user's question and the assistant's answer below, generate exactly 3 short, natural follow-up questions the user might want to ask next.
+
+## Rules ##
+- Follow-up questions should be things a curious user would naturally want to ask next, based on what was just discussed.
+- Keep each question short (under 12 words).
+- Do not repeat the original question or ask something already fully answered.
+- Output ONLY a JSON object with a "questions" key containing a list of exactly 3 strings. No extra text, no markdown fences.
+
+## Example output ##
+{"questions": ["What is multi-head attention?", "How does the decoder work?", "What datasets was this tested on?"]}
+
+Original Question: {{ question }}
+
+Answer: {{ answer }}

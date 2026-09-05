@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Chatbot</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+</head>
+
+<body>
+
+<div class="app">
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <button id="new-chat-btn" class="new-chat-btn active">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 5v14M5 12h14"/>
+                </svg>
+                New Chat
+            </button>
+            <button id="documents-btn" class="documents-nav-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <path d="M14 2v6h6"/>
+                </svg>
+                Documents
+            </button>
+        </div>
+
+        <div id="sessions-list" class="sessions-list">
+        </div>
+    </aside>
+
+    <div class="main-panel">
+
+        <header class="chat-header">
+            <div class="header-left">
+                <div class="header-icon">
+                    <svg viewBox="0 0 24 24" fill="white" width="16" height="16">
+                        <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1H3a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73A2 2 0 0 1 10 4a2 2 0 0 1 2-2zM7.5 12A1.5 1.5 0 1 0 9 13.5 1.5 1.5 0 0 0 7.5 12zm9 0a1.5 1.5 0 1 0 1.5 1.5 1.5 1.5 0 0 0-1.5-1.5zM8 17s1.5 2 4 2 4-2 4-2z"/>
+                    </svg>
+                </div>
+                <span id="header-title" class="header-title">RAG Assistant</span>
+                <span class="status-dot"></span>
+            </div>
+        </header>
+
+        <main id="chat-box" class="chat-box">
+            <div class="chat-inner"></div>
+        </main>
+
+        <footer id="input-area" class="input-area">
+            <div class="input-inner">
+                <input
+                    type="text"
+                    id="question"
+                    placeholder="Type your message..."
+                    autocomplete="off"
+                />
+                <button id="mic-btn" class="mic-btn" type="button" aria-label="Voice input" title="Speak">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                        <line x1="12" y1="19" x2="12" y2="23"/>
+                        <line x1="8" y1="23" x2="16" y2="23"/>
+                    </svg>
+                </button>
+                <button id="send-btn" aria-label="Send message" disabled>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 19V5"/>
+                        <path d="M5 12l7-7 7 7"/>
+                    </svg>
+                </button>
+            </div>
+        </footer>
+
+        <section id="documents-view" class="documents-view hidden">
+            <div class="documents-toolbar">
+                <div>
+                    <h2>Documents</h2>
+                    <p class="documents-subtitle">PDFs and Excel tables indexed in the knowledge base.</p>
+                </div>
+                <label for="pdf-upload-input" class="upload-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 3v12"/>
+                        <path d="M7 8l5-5 5 5"/>
+                        <path d="M4 17v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>
+                    </svg>
+                    Upload
+                </label>
+                <input type="file" id="pdf-upload-input" accept=".pdf,.xlsx,.xls" hidden />
+            </div>
+
+            <div id="upload-status" class="upload-status"></div>
+
+            <div id="documents-list" class="documents-list"></div>
+        </section>
+
+    </div>
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>

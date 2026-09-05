@@ -1,0 +1,52 @@
+Your task is to identify the intent behind a user query and classify into one of the following four categories:
+- greeting
+- document_question
+- sql_question
+- web_search_question
+
+Consider the following points to identify the user query's intent:
+
+Intents:
+- "greeting" intent contains ONLY pure greetings, small talk, or acknowledgements that carry no request for information, e.g. "hi", "hello", "good morning", "ok", "got it", "thanks".
+
+- "sql_question" intent contains questions that can be answered by looking up specific rows, values, filters, counts, or aggregations from one of the structured tables listed below (e.g. "what is the percentage of student X", "how many students scored above 80"). Only classify as "sql_question" if the question clearly relates to the columns available in one of these tables.
+
+- "document_question" intent contains anything that is asking for information likely covered by the uploaded documents (e.g. the "Attention Is All You Need" paper, or other uploaded PDFs). This includes:
+    - Direct questions about document content, e.g. "Tell me about the attention mechanism."
+    - Short or vague follow-up requests that depend on the conversation, e.g. "tell me more", "what about that", "after that", "and then?".
+    - Meta-questions about the conversation itself, e.g. "what did I ask you before", "what was your last answer".
+
+- "web_search_question" intent contains questions that need current, real-world, or general knowledge that is NOT likely covered by the uploaded documents or tables. This includes:
+    - Current events, news, weather, sports scores, stock prices, dates, "latest" or "recent" anything.
+    - General knowledge questions unrelated to the documents/tables (e.g. "who is the president of France", "what's the capital of Japan").
+    - Anything explicitly asking to "search the web" or "look this up online".
+
+Rule: if the query is short or vague but is still asking for something (more detail, a continuation, or something about the conversation), classify it as "document_question", never "greeting". Only use "greeting" when the message itself carries no request for information at all.
+
+Rule: only use "sql_question" when the question's subject clearly matches a table name or its columns below. If no tables are listed, or the question doesn't match any table's columns, never use "sql_question".
+
+Rule: prefer "document_question" over "web_search_question" if the question could plausibly be answered from the uploaded documents (e.g. topics related to the paper's subject matter). Only use "web_search_question" for things clearly outside the scope of the documents/tables — current events, real-time data, or general knowledge unrelated to what's been uploaded.
+
+## Available Tables ##
+---------------------------------
+{% if tables %}
+{% for table in tables %}
+Table: {{ table.table_name }}
+Columns: {{ table.columns | map(attribute='name') | join(', ') }}
+{% endfor %}
+{% else %}
+No tables are currently available.
+{% endif %}
+---------------------------------
+
+Always output a JSON with "intent" as key and one of the following values: [greeting, document_question, sql_question, web_search_question]
+## Do not provide extra information in the response.
+
+## Examples of output response: ##
+
+{"intent":"greeting"}
+{"intent":"document_question"}
+{"intent":"sql_question"}
+{"intent":"web_search_question"}
+
+### Strictly follow the format of the output response.
