@@ -22,3 +22,13 @@ class Config:
     DOCUMENT_INTELLIGENCE_ENDPOINT = os.environ.get('DOCUMENT_INTELLIGENCE_ENDPOINT', "https://shehzan.cognitiveservices.azure.com/")
 
     TAVILY_API_KEY = os.environ.get('TAVILY_API_KEY')
+
+    MYSQL_HOST = os.environ.get('MYSQL_HOST', 'localhost')
+    MYSQL_PORT = os.environ.get('MYSQL_PORT', '3306')
+    MYSQL_USER = os.environ.get('MYSQL_USER', 'root')
+    MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD')
+    MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE', 'OmniQuery')
+
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'change-this-in-production')
+    JWT_ALGORITHM = "HS256"
+    JWT_EXPIRY_MINUTES = 60 * 24 * 7   # 7 din

@@ -8,5 +8,10 @@ pypdf==6.16.1
 python-multipart==0.0.20
 pandas==2.3.3
 openpyxl==3.1.5
-langfuse==3.7.0
+langfuse==4.15.1
 tavily-python==0.8.0
+sqlalchemy==2.0.52
+pymysql==1.2.0
+python-jose[cryptography] 
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1

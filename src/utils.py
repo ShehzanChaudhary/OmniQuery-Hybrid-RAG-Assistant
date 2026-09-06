@@ -237,8 +237,8 @@ async def _get_followup_questions_async(question: str, answer: str) -> list[str]
         logger.error(f"Failed to generate follow-up questions: {ex}")
         return []
 
-def generate_final_response(question: str, session_id: Optional[str] = None) -> tuple[str, int, str]:
-    conversation = Conversation(session_id=session_id, history_turns=3)
+def generate_final_response(question: str, user_id: int, session_id: Optional[str] = None) -> tuple[str, int, str]:
+    conversation = Conversation(user_id=user_id, session_id=session_id, history_turns=3)
 
     with langfuse_client.start_as_current_observation(
         name=f"query: {question[:80]}",
@@ -398,8 +398,8 @@ def generate_final_response(question: str, session_id: Optional[str] = None) -> 
         return answer, tokens_used, conversation.session_id, followup_questions
 
 
-async def generate_final_response_stream(question: str, session_id: Optional[str] = None) -> AsyncGenerator[str, None]:
-    conversation = Conversation(session_id=session_id, history_turns=3)
+async def generate_final_response_stream(question: str, user_id: str, session_id: Optional[str] = None) -> AsyncGenerator[str, None]:
+    conversation = Conversation(user_id=user_id, session_id=session_id, history_turns=3)
 
     with langfuse_client.start_as_current_observation(
         name=f"query: {question[:80]}",

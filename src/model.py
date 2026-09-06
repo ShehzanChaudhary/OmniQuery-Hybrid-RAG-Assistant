@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Literal, Optional
 from pydantic import BaseModel
+from sqlalchemy import text
+from src.adapters.mysql_db import SessionLocal
 
 
 Role = Literal['system', 'user', 'assistant']
@@ -24,76 +26,102 @@ class Message:
 
 
 class Conversation:
-    def __init__(self, session_id: Optional[str] = None, history_turns: int = 3):
+    def __init__(self, user_id: int, session_id: Optional[str] = None, history_turns: int = 3):
+        self.user_id = user_id
         self.history_turns = history_turns
         self.messages: list[Message] = []
         self.title: Optional[str] = None
         self.created_at: str = datetime.now().isoformat()
 
         if session_id:
-            # Existing session - load from file
             self.session_id = session_id
             self._load()
         else:
-            # Create new session
             self.session_id = str(uuid.uuid4())
+            self._create_session_row()
 
-    def _file_path(self) -> Path:
-        return SESSIONS_DIR / f"{self.session_id}.json"
+    def _create_session_row(self) -> None:
+        """Inserts a new row into the sessions table for a brand-new conversation."""
+        db = SessionLocal()
+        try:
+            db.execute(
+                text("INSERT INTO sessions (id, user_id, title) VALUES (:id, :user_id, :title)"),
+                {"id": self.session_id, "user_id": self.user_id, "title": None},
+            )
+            db.commit()
+        finally:
+            db.close()
+
+    def _load(self) -> None:
+        """Loads an existing session's messages from MySQL — only if it belongs to this user."""
+        db = SessionLocal()
+        try:
+            session_row = db.execute(
+                text("SELECT title, created_at FROM sessions WHERE id = :id AND user_id = :user_id"),
+                {"id": self.session_id, "user_id": self.user_id},
+            ).fetchone()
+
+            if session_row is None:
+                # Either the session doesn't exist, or it belongs to a different user —
+                # treat it as a fresh session rather than leaking someone else's data.
+                self._create_session_row()
+                return
+
+            self.title, created_at = session_row
+            self.created_at = created_at.isoformat() if created_at else self.created_at
+
+            rows = db.execute(
+                text("SELECT role, content FROM messages WHERE session_id = :id ORDER BY id ASC"),
+                {"id": self.session_id},
+            ).fetchall()
+
+            self.messages = [Message(role=row[0], content=row[1]) for row in rows]
+        finally:
+            db.close()
 
     def add(self, role: Role, content: str) -> None:
         self.messages.append(Message(role=role, content=content))
 
-        # The title will be set only the first time — the user's first message of the session.
-        if self.title is None and role == 'user':
-            self.title = content[:60]   # Truncate title, to see in the sidebar
+        db = SessionLocal()
+        try:
+            if self.title is None and role == 'user':
+                self.title = content[:60]
+                db.execute(
+                    text("UPDATE sessions SET title = :title WHERE id = :id"),
+                    {"title": self.title, "id": self.session_id},
+                )
 
-        self._save()   # File will be updated after every new message
+            db.execute(
+                text("INSERT INTO messages (session_id, role, content) VALUES (:session_id, :role, :content)"),
+                {"session_id": self.session_id, "role": role, "content": content},
+            )
+            db.commit()
+        finally:
+            db.close()
 
     def recent(self) -> list[Message]:
         return self.messages[-(self.history_turns * 2):]
 
-    def _save(self) -> None:
-        data = {
-            "session_id": self.session_id,
-            "title": self.title,
-            "created_at": self.created_at,
-            "messages": [m.to_dict() for m in self.messages],
-        }
-        with open(self._file_path(), "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-
-    def _load(self) -> None:
-        path = self._file_path()
-        if not path.exists():
-            # Given session_id but file not found, create new session
-            return
-
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
-        self.title = data.get("title")
-        self.created_at = data.get("created_at", self.created_at)
-        self.messages = [Message(role=m["role"], content=m["content"]) for m in data.get("messages", [])]
-
     @staticmethod
-    def list_sessions() -> list[dict]:
-        """
-        Returns metadata for all saved sessions (for the sidebar) —
-        session_id, title, created_at — without loading full message history.
-        """
-        sessions = []
-        for file_path in SESSIONS_DIR.glob("*.json"):
-            with open(file_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            sessions.append({
-                "session_id": data.get("session_id"),
-                "title": data.get("title") or "New Chat",
-                "created_at": data.get("created_at"),
-            })
-        # Most recent session at the top
-        sessions.sort(key=lambda s: s["created_at"], reverse=True)
-        return sessions
+    def list_sessions(user_id: int) -> list[dict]:
+        """Returns metadata for all sessions belonging to this user (for the sidebar)."""
+        db = SessionLocal()
+        try:
+            rows = db.execute(
+                text("SELECT id, title, created_at FROM sessions WHERE user_id = :user_id ORDER BY created_at DESC"),
+                {"user_id": user_id},
+            ).fetchall()
+
+            return [
+                {
+                    "session_id": row[0],
+                    "title": row[1] or "New Chat",
+                    "created_at": row[2].isoformat() if row[2] else None,
+                }
+                for row in rows
+            ]
+        finally:
+            db.close()
 
 @dataclass
 class Chunk:
@@ -129,3 +157,12 @@ class QueryResponse:
 class QueryRequest(BaseModel):
     question: str
     session_id: Optional[str] = None
+
+class SignupRequest(BaseModel):
+    email: str
+    password: str
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
