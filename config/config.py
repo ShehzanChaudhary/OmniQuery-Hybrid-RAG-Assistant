@@ -31,4 +31,4 @@ class Config:
 
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'change-this-in-production')
     JWT_ALGORITHM = "HS256"
-    JWT_EXPIRY_MINUTES = 60 * 24 * 7   # 7 din
+    JWT_EXPIRY_MINUTES = 60 * 24 * 7   # 7 days
