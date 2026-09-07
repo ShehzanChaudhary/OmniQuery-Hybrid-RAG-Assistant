@@ -186,7 +186,7 @@ The frontend still needs to be served separately (step 5 above) since it isn't b
 - [x] Web search integration (Tavily) for current events / general knowledge
 - [x] LLM call tracing / observability
 - [x] Containerized deployment (Docker)
-- [ ] Multi-user authentication with per-user data isolation
+- [x] Multi-user authentication with per-user data isolation
 - [ ] Guardrails against prompt injection and unsafe/out-of-scope queries
 - [ ] Multi-step ("agentic") SQL for questions that need more than one query
 - [ ] Migration path to a production vector DB / Redis cache for multi-instance deployments
