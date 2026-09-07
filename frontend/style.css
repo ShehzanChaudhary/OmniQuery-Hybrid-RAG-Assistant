@@ -693,6 +693,131 @@ body {
     50%, 100% { opacity: 0; }
 }
 
+/* ============ Auth Screen ============ */
+
+.auth-view {
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f9fafb;
+}
+
+.auth-view.hidden {
+    display: none;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 360px;
+    background: white;
+    border: 1px solid #eef0f2;
+    border-radius: 16px;
+    padding: 32px 28px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+}
+
+.auth-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.auth-header .header-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+}
+
+.auth-header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 4px;
+}
+
+.auth-header p {
+    font-size: 13.5px;
+    color: #6b7280;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.auth-form input {
+    padding: 11px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.auth-form input:focus {
+    border-color: #111827;
+}
+
+.auth-form button {
+    margin-top: 6px;
+    padding: 11px 14px;
+    border: none;
+    border-radius: 10px;
+    background: #111827;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.auth-form button:hover:not(:disabled) {
+    background: #1f2937;
+}
+
+.auth-form button:disabled {
+    background: #d1d5db;
+    cursor: not-allowed;
+}
+
+.auth-error {
+    color: #dc2626;
+    font-size: 13px;
+    margin-top: 12px;
+    min-height: 1em;
+    text-align: center;
+}
+
+.auth-toggle {
+    text-align: center;
+    font-size: 13.5px;
+    color: #6b7280;
+    margin-top: 16px;
+}
+
+.auth-toggle a {
+    color: #111827;
+    font-weight: 500;
+    text-decoration: none;
+    margin-left: 4px;
+}
+
+.auth-toggle a:hover {
+    text-decoration: underline;
+}
+
+/* ============ Main app hidden state ============ */
+
+.app.hidden {
+    display: none;
+}
+
 /* Documents view */
 
 .documents-view {

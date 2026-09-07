@@ -22,6 +22,23 @@ const pdfUploadInput = document.getElementById("pdf-upload-input");
 const uploadStatusEl = document.getElementById("upload-status");
 const micButton = document.getElementById("mic-btn");
 
+const authView = document.getElementById("auth-view");
+const mainApp = document.getElementById("main-app");
+const authForm = document.getElementById("auth-form");
+const authEmail = document.getElementById("auth-email");
+const authPassword = document.getElementById("auth-password");
+const authSubmitBtn = document.getElementById("auth-submit-btn");
+const authError = document.getElementById("auth-error");
+const authSubtitle = document.getElementById("auth-subtitle");
+const authToggleText = document.getElementById("auth-toggle-text");
+const authToggleLink = document.getElementById("auth-toggle-link");
+const logoutBtn = document.getElementById("logout-btn");
+
+const AUTH_LOGIN_URL = "/auth/login";
+const AUTH_SIGNUP_URL = "/auth/signup";
+
+let authMode = "login";   // "login" | "signup"
+
 let currentSessionId = null;
 let isStreaming = false;
 
@@ -207,6 +224,129 @@ function renderFollowups(container, questions) {
     container.appendChild(wrap);
 }
 
+// ============ Auth ============
+
+function getToken() {
+    return localStorage.getItem("access_token");
+}
+
+function setToken(token) {
+    localStorage.setItem("access_token", token);
+}
+
+function clearToken() {
+    localStorage.removeItem("access_token");
+}
+
+// Wrapper around fetch that automatically attaches the Authorization header.
+// If the server ever responds 401 (missing/expired token), we drop the user
+// back to the auth screen instead of leaving the app in a broken state.
+async function authFetch(url, options = {}) {
+    const token = getToken();
+    const headers = { ...(options.headers || {}) };
+    if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(url, { ...options, headers });
+
+    if (response.status === 401) {
+        clearToken();
+        showAuthView();
+        throw new Error("Session expired. Please log in again.");
+    }
+
+    return response;
+}
+
+function showAuthView() {
+    authView.classList.remove("hidden");
+    mainApp.classList.add("hidden");
+}
+
+function showMainApp() {
+    authView.classList.add("hidden");
+    mainApp.classList.remove("hidden");
+    startNewChat();
+    loadSessions();
+}
+
+function setAuthMode(mode) {
+    authMode = mode;
+    authError.textContent = "";
+    if (mode === "login") {
+        authSubtitle.textContent = "Sign in to continue";
+        authSubmitBtn.textContent = "Log In";
+        authToggleText.textContent = "Don't have an account?";
+        authToggleLink.textContent = "Sign up";
+    } else {
+        authSubtitle.textContent = "Create your account";
+        authSubmitBtn.textContent = "Sign Up";
+        authToggleText.textContent = "Already have an account?";
+        authToggleLink.textContent = "Log in";
+    }
+}
+
+async function handleAuthSubmit(event) {
+    event.preventDefault();
+
+    const email = authEmail.value.trim();
+    const password = authPassword.value;
+    if (!email || !password) return;
+
+    authError.textContent = "";
+    authSubmitBtn.disabled = true;
+    authSubmitBtn.textContent = authMode === "login" ? "Logging in..." : "Signing up...";
+
+    const url = authMode === "login" ? AUTH_LOGIN_URL : AUTH_SIGNUP_URL;
+
+    try {
+        const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.detail || "Something went wrong.");
+        }
+
+        setToken(data.access_token);
+        authForm.reset();
+        showMainApp();
+
+    } catch (error) {
+        authError.textContent = error.message;
+    }
+
+    authSubmitBtn.disabled = false;
+    setAuthMode(authMode);   // resets button text
+}
+
+function handleLogout() {
+    clearToken();
+    currentSessionId = null;
+    showAuthView();
+}
+
+authForm.addEventListener("submit", handleAuthSubmit);
+
+authToggleLink.addEventListener("click", (event) => {
+    event.preventDefault();
+    setAuthMode(authMode === "login" ? "signup" : "login");
+});
+
+logoutBtn.addEventListener("click", handleLogout);
+
+// ============ Startup: show auth screen or main app depending on token ============
+if (getToken()) {
+    showMainApp();
+} else {
+    showAuthView();
+}
+
 function addMessage(message, type) {
     const messageDiv = document.createElement("div");
     messageDiv.className = `message ${type}`;
@@ -268,7 +408,7 @@ async function sendMessage() {
     const { bubble: botBubble, label: botLabel } = addTypingIndicator();
 
     try {
-        const response = await fetch(API_URL, {
+        const response = await authFetch(API_URL, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -336,7 +476,7 @@ async function sendMessageStream() {
     let cursorEl = null;
 
     try {
-        const response = await fetch(STREAM_API_URL, {
+        const response = await authFetch(STREAM_API_URL, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -431,7 +571,7 @@ async function sendMessageStream() {
 
 async function loadSessions() {
     try {
-        const response = await fetch(SESSIONS_API_URL);
+        const response = await authFetch(SESSIONS_API_URL);
         if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
 
         const sessions = await response.json();
@@ -456,7 +596,7 @@ async function loadSessions() {
 
 async function loadSessionMessages(sessionId) {
     try {
-        const response = await fetch(`${SESSIONS_API_URL}/${sessionId}`);
+        const response = await authFetch(`${SESSIONS_API_URL}/${sessionId}`);
         if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
 
         const data = await response.json();
@@ -543,8 +683,8 @@ async function loadDocuments() {
 
     try {
         const [docsResponse, tablesResponse] = await Promise.all([
-            fetch(DOCUMENTS_API_URL),
-            fetch(TABLES_API_URL),
+            authFetch(DOCUMENTS_API_URL),
+            authFetch(TABLES_API_URL),
         ]);
 
         if (!docsResponse.ok) throw new Error(`HTTP error: ${docsResponse.status}`);
@@ -631,7 +771,7 @@ async function deleteDocument(documentId, deleteBtn) {
     deleteBtn.disabled = true;
 
     try {
-        const response = await fetch(`${DOCUMENTS_API_URL}/${encodeURIComponent(documentId)}`, {
+        const response = await authFetch(`${DOCUMENTS_API_URL}/${encodeURIComponent(documentId)}`, {
             method: "DELETE",
         });
 
@@ -652,7 +792,7 @@ async function deleteTable(tableName, deleteBtn) {
     deleteBtn.disabled = true;
 
     try {
-        const response = await fetch(`${TABLES_API_URL}/${encodeURIComponent(tableName)}`, {
+        const response = await authFetch(`${TABLES_API_URL}/${encodeURIComponent(tableName)}`, {
             method: "DELETE",
         });
 
@@ -680,7 +820,7 @@ async function uploadDocument(file) {
     formData.append("file", file);
 
     try {
-        const response = await fetch(uploadUrl, {
+        const response = await authFetch(uploadUrl, {
             method: "POST",
             body: formData,
         });
@@ -717,8 +857,6 @@ pdfUploadInput.addEventListener("change", () => {
 });
 
 newChatBtn.addEventListener("click", startNewChat);
-
-loadSessions();
 
 sendButton.addEventListener("click", sendMessageStream);
 

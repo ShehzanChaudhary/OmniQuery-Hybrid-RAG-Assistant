@@ -5,3 +5,4 @@ __pycache__/
 .claude
 chroma_store/
 data
+Database.sql
